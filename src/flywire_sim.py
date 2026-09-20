@@ -355,7 +355,8 @@ def quantize_weights_int8(weights, offsets, n_neurons):
 
 
 def run_simulation(n_neurons, n_synapses, offsets, targets, weights,
-                   num_timesteps=10000, warmup_steps=500, seed=42, verbose=False):
+                   num_timesteps=10000, warmup_steps=500, seed=42, verbose=False,
+                   stimuli=None):
 
     kernels = compile_kernels()
     print("CUDA kernels compiled successfully.\n")
@@ -414,6 +415,11 @@ def run_simulation(n_neurons, n_synapses, offsets, targets, weights,
     for step in range(total_steps):
         is_bench = step >= warmup_steps
         d_num_spikes.fill(0)
+
+        # Apply external experimental stimuli before neuron update.
+        if stimuli:
+            for stimulus in stimuli:
+                stimulus.apply(d_current, step)
 
         # Phase 1: Fused noise + neuron update + spike detect
         ev[0].record()
